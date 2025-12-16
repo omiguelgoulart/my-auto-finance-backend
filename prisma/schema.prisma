@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id                String   @id @default(uuid())
+  nome              String
+  email             String   @unique
+  senha             String
+  telefone          String?  @unique // útil pro WhatsApp
+  fotoUrl           String?
+
+  // Preferências (melhor UX)
+  fusoHorario        String  @default("America/Sao_Paulo")
+  moedaPadrao        String  @default("BRL")
+  idioma             String  @default("pt-BR")
+
+  // Controle e segurança
+  status            StatusUsuario @default(ATIVO)
+  papel             PapelUsuario  @default(USUARIO)
+  emailVerificadoEm DateTime?
+  ultimoLoginEm     DateTime?
+
+  // Relacionamentos
+  contas            Conta[]
+  categorias         Categoria[]
+  movimentacoes      Movimentacao[]
+  regras             RegraCategoria[]
+  tokensRecuperacaoSenha TokenRecuperacaoSenha[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime? // soft delete (LGPD / recuperação)
+}
+
+
+
+model TokenRecuperacaoSenha {
+  id           String   @id @default(uuid())
+  usuarioId    String
+  tokenHash    String   @unique
+  expiraEm     DateTime
+  usadoEm      DateTime?
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+
+enum StatusUsuario {
+  ATIVO
+  BLOQUEADO
+  PENDENTE
+}
+
+enum PapelUsuario {
+  USUARIO
+  ADMIN
+}
+
+
+
+model Banco {
+  id        String   @id @default(uuid())
+  nome      String
+  codigo    String?
+  createdAt DateTime @default(now())
+  contas    Conta[]
+}
+
+
+model Conta {
+  id            String        @id @default(uuid())
+  usuarioId     String
+  bancoId       String
+  nome          String
+  tipo          TipoConta
+  saldoInicial  Float
+  usuario       Usuario       @relation(fields: [usuarioId], references: [id])
+  banco         Banco         @relation(fields: [bancoId], references: [id])
+  movimentacoes Movimentacao[]
+  createdAt     DateTime      @default(now())
+}
+
+enum TipoConta {
+  CORRENTE
+  POUPANCA
+  CARTAO_CREDITO
+  DINHEIRO
+}
+
+model Categoria {
+  id             String        @id @default(uuid())
+  usuarioId      String
+  nome           String
+  tipo           TipoMovimentacao
+  cor            String?
+  usuario        Usuario       @relation(fields: [usuarioId], references: [id])
+  movimentacoes  Movimentacao[]
+  createdAt      DateTime      @default(now())
+  regraCategorias RegraCategoria[]
+}
+
+model Movimentacao {
+  id               String        @id @default(uuid())
+  usuarioId        String
+  contaId          String
+  categoriaId      String?
+  descricao        String
+  valor            Float
+  data             DateTime
+  tipo             TipoMovimentacao
+  origem           OrigemLancamento
+  categoriaAutomatica Boolean     @default(false)
+  confiancaIA      Float?
+  idExterno        String?       // ID do banco (extratos)
+  usuario          Usuario       @relation(fields: [usuarioId], references: [id])
+  conta            Conta         @relation(fields: [contaId], references: [id])
+  categoria        Categoria?    @relation(fields: [categoriaId], references: [id])
+  createdAt        DateTime      @default(now())
+}
+
+enum TipoMovimentacao {
+  RECEITA
+  DESPESA
+}
+
+enum OrigemLancamento {
+  MANUAL
+  WHATSAPP
+  EXTRATO
+}
+
+model RegraCategoria {
+  id          String   @id @default(uuid())
+  usuarioId   String
+  palavraChave String
+  categoriaId String
+  prioridade  Int      @default(1)
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+  createdAt   DateTime @default(now())
+}

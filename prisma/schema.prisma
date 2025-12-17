@@ -38,8 +38,6 @@ model Usuario {
   deletedAt         DateTime? // soft delete (LGPD / recuperação)
 }
 
-
-
 model TokenRecuperacaoSenha {
   id           String   @id @default(uuid())
   usuarioId    String
@@ -49,7 +47,6 @@ model TokenRecuperacaoSenha {
   usuario      Usuario  @relation(fields: [usuarioId], references: [id])
   createdAt    DateTime @default(now())
 }
-
 
 enum StatusUsuario {
   ATIVO
@@ -62,8 +59,6 @@ enum PapelUsuario {
   ADMIN
 }
 
-
-
 model Banco {
   id        String   @id @default(uuid())
   nome      String
@@ -71,7 +66,6 @@ model Banco {
   createdAt DateTime @default(now())
   contas    Conta[]
 }
-
 
 model Conta {
   id            String        @id @default(uuid())

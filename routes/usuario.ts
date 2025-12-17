@@ -7,7 +7,7 @@ import { verificaToken } from "../middlewares/verificaToken"
 const prisma = new PrismaClient()
 const router = Router()
 
-export const usuarioCadastroSchema = z.object({
+const usuarioCadastroSchema = z.object({
     nome: z.string().min(2, "Nome muito curto"),
     email: z.string().email("Email inválido").toLowerCase(),
     telefone: z.string().min(10, "Telefone inválido").max(20, "Telefone inválido").optional(),

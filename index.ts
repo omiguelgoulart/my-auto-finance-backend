@@ -1,11 +1,8 @@
 import express from 'express';
-import categoriaRoutes from './routes/categorias';
-import usuarioRoutes from './routes/usuarios';
-import loginRoutes from './routes/login';
-import produtoRoutes from './routes/produtos';
-import pedidoRoutes from './routes/pedidoItens';
-import comandaRoutes from './routes/comandas';
 
+import loginRoutes from './routes/login';
+import usuarioRoutes from './routes/usuario';
+import bancoRoutes from './routes/banco';
 
 
 import cors from 'cors';
@@ -18,19 +15,17 @@ app.use(express.json());
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.json({ message: 'API comandas!' });
+  res.json({ message: 'API myAutoFinance!' });
 });
 
 
 app.use('/login', loginRoutes);
 app.use('/usuario', usuarioRoutes);
-app.use('/categoria', categoriaRoutes);
-app.use('/produto', produtoRoutes);
-app.use('/pedido', pedidoRoutes);
-app.use('/comanda', comandaRoutes);
+app.use('/banco', bancoRoutes);
 
 
-const PORT = process.env.PORT || 3003;
+
+const PORT = 3003;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -6,17 +6,34 @@ import { verificaToken } from "../middlewares/verificaToken";
 const prisma = new PrismaClient();
 const router = Router();
 
-const movimentacaoSchema = z.object({
-  contaId: z.string().uuid("contaId inválido"),
-  categoriaId: z.string().uuid("categoriaId inválido").optional(),
-  descricao: z.string().min(1, "Descrição é obrigatória"),
-  valor: z.number().positive("Valor deve ser positivo"),
-  data: z.coerce.date(),
-  tipo: z.enum(["RECEITA", "DESPESA"]),
-  origem: z.enum(["MANUAL", "WHATSAPP", "EXTRATO"]),
-  categoriaAutomatica: z.boolean().optional(),
-  confiancaIA: z.number().min(0).max(1).optional(),
-  idExterno: z.string().optional(),
+const movimentacaoSchemaBase = z.object({
+    contaId: z.string().uuid("contaId inválido"),
+    categoriaId: z.string().uuid("categoriaId inválido").optional(),
+    descricao: z.string().min(1, "Descrição é obrigatória"),
+    valor: z.number().positive("Valor deve ser positivo"),
+    data: z.coerce.date(),
+    tipo: z.enum(["RECEITA", "DESPESA"]),
+    origem: z.enum(["MANUAL", "WHATSAPP", "EXTRATO"]),
+    categoriaAutomatica: z.boolean().optional(),
+    confiancaIA: z.number().min(0).max(1).optional(),
+    idExterno: z.string().optional(),
+    competencia: z.string().regex(/^\d{4}-\d{2}$/, "Competência deve estar no formato YYYY-MM").optional(),
+    observacoes: z.string().optional(),
+    recorrente: z.boolean().optional(),
+    recorrenciaTipo: z.enum(["MENSAL", "SEMANAL", "ANUAL"]).optional(),
+    recorrenciaIntervalo: z.number().int().positive().optional(),
+    recorrenciaFim: z.coerce.date().optional(),
+  });
+
+const movimentacaoSchema = movimentacaoSchemaBase.refine((d) => !d.recorrente || !!d.recorrenciaTipo, {
+  path: ["recorrenciaTipo"],
+  message: "recorrenciaTipo é obrigatório quando recorrente = true",
+});
+
+const movimentacaoPatchSchema = movimentacaoSchemaBase.partial().omit({
+  contaId: true,
+  idExterno: true,
+  origem: true,
 });
 
 router.post("/", verificaToken, async (req, res) => {
@@ -40,7 +57,9 @@ router.post("/", verificaToken, async (req, res) => {
       });
 
       if (!categoria) {
-        return res.status(403).json({ erro: "Categoria inválida para este usuário." });
+        return res
+          .status(403)
+          .json({ erro: "Categoria inválida para este usuário." });
       }
     }
 
@@ -56,7 +75,17 @@ router.post("/", verificaToken, async (req, res) => {
         origem: dados.origem,
         categoriaAutomatica: dados.categoriaAutomatica ?? false,
         confiancaIA: dados.confiancaIA,
-        idExterno: dados.idExterno,
+        idExterno: dados.idExterno ?? null,
+
+        competencia: dados.competencia ?? null,
+        observacoes: dados.observacoes ?? null,
+
+        recorrente: dados.recorrente ?? false,
+        recorrenciaTipo: dados.recorrente ? dados.recorrenciaTipo ?? null : null,
+        recorrenciaIntervalo: dados.recorrente
+          ? dados.recorrenciaIntervalo ?? 1
+          : null,
+        recorrenciaFim: dados.recorrente ? dados.recorrenciaFim ?? null : null,
       },
     });
 
@@ -128,11 +157,6 @@ router.delete("/:id", verificaToken, async (req, res) => {
   }
 });
 
-const movimentacaoPatchSchema = movimentacaoSchema.partial().omit({
-    contaId: true, 
-    idExterno: true, 
-  });
-
 router.patch("/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
   const usuarioId = String(req.userLogadoId);
@@ -156,16 +180,29 @@ router.patch("/:id", verificaToken, async (req, res) => {
       });
 
       if (!categoria) {
-        return res.status(403).json({ erro: "Categoria inválida para este usuário." });
+        return res
+          .status(403)
+          .json({ erro: "Categoria inválida para este usuário." });
       }
+    }
+
+    const recorrente = dados.recorrente;
+    const dataUpdate: Record<string, unknown> = {
+      ...dados,
+      categoriaId: dados.categoriaId ?? undefined,
+      competencia: dados.competencia ?? undefined,
+      observacoes: dados.observacoes ?? undefined,
+    };
+
+    if (recorrente === false) {
+      dataUpdate.recorrenciaTipo = null;
+      dataUpdate.recorrenciaIntervalo = null;
+      dataUpdate.recorrenciaFim = null;
     }
 
     const movimentacaoAtualizada = await prisma.movimentacao.update({
       where: { id },
-      data: {
-        ...dados,
-        categoriaId: dados.categoriaId ?? undefined,
-      },
+      data: dataUpdate,
     });
 
     return res.status(200).json(movimentacaoAtualizada);

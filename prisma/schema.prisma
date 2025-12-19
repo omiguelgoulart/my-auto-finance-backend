@@ -12,21 +12,18 @@ model Usuario {
   nome              String
   email             String   @unique
   senha             String
-  telefone          String?  @unique // útil pro WhatsApp
+  telefone          String?  @unique //
   fotoUrl           String?
 
-  // Preferências (melhor UX)
   fusoHorario        String  @default("America/Sao_Paulo")
   moedaPadrao        String  @default("BRL")
   idioma             String  @default("pt-BR")
 
-  // Controle e segurança
   status            StatusUsuario @default(ATIVO)
   papel             PapelUsuario  @default(USUARIO)
   emailVerificadoEm DateTime?
   ultimoLoginEm     DateTime?
 
-  // Relacionamentos
   contas            Conta[]
   categorias         Categoria[]
   movimentacoes      Movimentacao[]
@@ -35,7 +32,7 @@ model Usuario {
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-  deletedAt         DateTime? // soft delete (LGPD / recuperação)
+  deletedAt         DateTime? 
 }
 
 model TokenRecuperacaoSenha {
@@ -100,23 +97,41 @@ model Categoria {
 }
 
 model Movimentacao {
-  id               String        @id @default(uuid())
-  usuarioId        String
-  contaId          String
-  categoriaId      String?
-  descricao        String
-  valor            Float
-  data             DateTime
-  tipo             TipoMovimentacao
-  origem           OrigemLancamento
-  categoriaAutomatica Boolean     @default(false)
-  confiancaIA      Float?
-  idExterno        String?       // ID do banco (extratos)
-  usuario          Usuario       @relation(fields: [usuarioId], references: [id])
-  conta            Conta         @relation(fields: [contaId], references: [id])
-  categoria        Categoria?    @relation(fields: [categoriaId], references: [id])
-  createdAt        DateTime      @default(now())
+  id                  String   @id @default(uuid())
+  usuarioId           String
+  contaId             String
+  categoriaId         String?
+  descricao            String
+  valor               Float
+  data                DateTime
+
+  // 🔹 NOVOS CAMPOS DE RECORRÊNCIA
+  recorrente          Boolean  @default(false)
+  recorrenciaTipo     TipoRecorrencia?
+  recorrenciaIntervalo Int?     // ex: 1 (todo mês), 3 (a cada 3 meses)
+  recorrenciaFim      DateTime?
+
+  competencia         String?
+  observacoes         String?
+
+  tipo                TipoMovimentacao
+  origem              OrigemLancamento
+  categoriaAutomatica Boolean  @default(false)
+  confiancaIA         Float?
+  idExterno           String?
+
+  usuario             Usuario  @relation(fields: [usuarioId], references: [id])
+  conta               Conta    @relation(fields: [contaId], references: [id])
+  categoria            Categoria? @relation(fields: [categoriaId], references: [id])
+  createdAt           DateTime @default(now())
 }
+
+enum TipoRecorrencia {
+  MENSAL
+  SEMANAL
+  ANUAL
+}
+
 
 enum TipoMovimentacao {
   RECEITA

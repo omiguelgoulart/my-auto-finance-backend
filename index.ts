@@ -3,6 +3,10 @@ import express from 'express';
 import loginRoutes from './routes/login';
 import usuarioRoutes from './routes/usuario';
 import bancoRoutes from './routes/banco';
+import contaRoutes from './routes/conta';
+import categoriaRoutes from './routes/categoria';
+import movimentacaoRoutes from './routes/movimentacao';
+import regraCategoriaRoutes from './routes/regraCategoria';
 
 
 import cors from 'cors';
@@ -22,6 +26,10 @@ app.get('/', (req, res) => {
 app.use('/login', loginRoutes);
 app.use('/usuario', usuarioRoutes);
 app.use('/banco', bancoRoutes);
+app.use('/conta', contaRoutes);
+app.use('/categoria', categoriaRoutes);
+app.use('/movimentacao', movimentacaoRoutes);
+app.use('/regra-categoria', regraCategoriaRoutes);
 
 
 

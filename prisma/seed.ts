@@ -1,117 +1,139 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Iniciando seed...");
+  const senhaHash = await bcrypt.hash("12345678", 10);
 
-  // -------------------------------
-  // Usuários
-  // -------------------------------
-  const admin = await prisma.usuario.create({
+  const usuario = await prisma.usuario.create({
     data: {
-      nome: "Administrador",
-      email: "admin@saborcaseiro.com",
-      senha: "123456", // coloque hash futuramente
-      papel: "ADMIN",
+      nome: "Luis Miguel Rosa Goulart",
+      email: "miguel@email.com",
+      senha: senhaHash,
     },
   });
 
-  const garcom = await prisma.usuario.create({
+  const nubank = await prisma.banco.create({
+    data: { nome: "Nubank", codigo: "0260" },
+  });
+
+  const bancoBrasil = await prisma.banco.create({
+    data: { nome: "Banco do Brasil", codigo: "0001" },
+  });
+
+  const contaNubank = await prisma.conta.create({
     data: {
-      nome: "Pedro Garçom",
-      email: "garcom@saborcaseiro.com",
-      senha: "123456",
-      papel: "GARCOM",
+      usuarioId: usuario.id,
+      bancoId: nubank.id,
+      nome: "Conta Nubank",
+      tipo: "CORRENTE",
+      saldoInicial: 0,
     },
   });
 
-  const funcionario = await prisma.usuario.create({
+  const contaBB = await prisma.conta.create({
     data: {
-      nome: "Maria Funcionária",
-      email: "func@saborcaseiro.com",
-      senha: "123456",
-      papel: "FUNCIONARIO",
+      usuarioId: usuario.id,
+      bancoId: bancoBrasil.id,
+      nome: "Conta Banco do Brasil",
+      tipo: "CORRENTE",
+      saldoInicial: 1.83,
     },
   });
 
-  console.log("✔ Usuários criados");
-
-  // -------------------------------
-  // Categorias
-  // -------------------------------
-  await prisma.categoria.createMany({
+  const categorias = await prisma.categoria.createMany({
     data: [
-      { nome: "Bebidas", descricao: "Refrigerantes, sucos e água" },
-      { nome: "Lanches", descricao: "Xis, hambúrguer e porções" },
-      { nome: "Pratos", descricao: "Pratos executivos e refeições" },
+      { usuarioId: usuario.id, nome: "Alimentação", tipo: "DESPESA", cor: "#EF4444" },
+      { usuarioId: usuario.id, nome: "Moradia", tipo: "DESPESA", cor: "#F59E0B" },
+      { usuarioId: usuario.id, nome: "Transporte", tipo: "DESPESA", cor: "#3B82F6" },
+      { usuarioId: usuario.id, nome: "Lazer", tipo: "DESPESA", cor: "#8B5CF6" },
+      { usuarioId: usuario.id, nome: "Serviços", tipo: "DESPESA", cor: "#10B981" },
+      { usuarioId: usuario.id, nome: "Transferências", tipo: "RECEITA", cor: "#22C55E" },
     ],
   });
 
-  console.log("✔ Categorias criadas");
+  const alimentacao = await prisma.categoria.findFirst({
+    where: { nome: "Alimentação", usuarioId: usuario.id },
+  });
 
-  // Buscar categorias para vincular produtos
-  const bebidas = await prisma.categoria.findFirst({ where: { nome: "Bebidas" } });
-  const lanches = await prisma.categoria.findFirst({ where: { nome: "Lanches" } });
-  const pratos  = await prisma.categoria.findFirst({ where: { nome: "Pratos" } });
+  const moradia = await prisma.categoria.findFirst({
+    where: { nome: "Moradia", usuarioId: usuario.id },
+  });
 
-  // -------------------------------
-  // Produtos
-  // -------------------------------
-  await prisma.produto.createMany({
+  const transferencias = await prisma.categoria.findFirst({
+    where: { nome: "Transferências", usuarioId: usuario.id },
+  });
+
+  await prisma.movimentacao.createMany({
     data: [
       {
-        nome: "Refrigerante Lata",
-        descricao: "350ml",
-        preco: 6.00,
-        estoque: 50,
-        categoriaId: bebidas!.id,
+        usuarioId: usuario.id,
+        contaId: contaNubank.id,
+        categoriaId: transferencias?.id,
+        descricao: "Pix recebido - TEIA ECOLOGICA",
+        valor: 600,
+        data: new Date("2025-12-02"),
+        tipo: "RECEITA",
+        origem: "EXTRATO",
+        competencia: "2025-12",
       },
       {
-        nome: "Água Mineral",
-        descricao: "500ml",
-        preco: 4.00,
-        estoque: 40,
-        categoriaId: bebidas!.id,
+        usuarioId: usuario.id,
+        contaId: contaNubank.id,
+        categoriaId: alimentacao?.id,
+        descricao: "Mini Kalzone",
+        valor: 23,
+        data: new Date("2025-12-01"),
+        tipo: "DESPESA",
+        origem: "EXTRATO",
+        competencia: "2025-12",
       },
       {
-        nome: "Xis Salada",
-        descricao: "Pão, carne, salada e molho",
-        preco: 22.00,
-        estoque: 20,
-        categoriaId: lanches!.id,
+        usuarioId: usuario.id,
+        contaId: contaNubank.id,
+        categoriaId: alimentacao?.id,
+        descricao: "Netflix",
+        valor: 59.9,
+        data: new Date("2025-12-11"),
+        tipo: "DESPESA",
+        origem: "EXTRATO",
+        recorrente: true,
+        recorrenciaTipo: "MENSAL",
+        competencia: "2025-12",
+        observacoes: "Assinatura mensal",
       },
       {
-        nome: "Batata Frita",
-        descricao: "Porção média",
-        preco: 18.00,
-        estoque: 15,
-        categoriaId: lanches!.id,
+        usuarioId: usuario.id,
+        contaId: contaNubank.id,
+        categoriaId: moradia?.id,
+        descricao: "Pagamento fatura cartão",
+        valor: 319,
+        data: new Date("2025-12-13"),
+        tipo: "DESPESA",
+        origem: "EXTRATO",
+        competencia: "2025-12",
       },
       {
-        nome: "Prato Feito",
-        descricao: "Arroz, feijão, salada e carne",
-        preco: 25.00,
-        estoque: 30,
-        categoriaId: pratos!.id,
-      },
-      {
-        nome: "Parmegiana",
-        descricao: "Carne + molho + queijo + arroz + fritas",
-        preco: 32.00,
-        estoque: 18,
-        categoriaId: pratos!.id,
+        usuarioId: usuario.id,
+        contaId: contaBB.id,
+        categoriaId: moradia?.id,
+        descricao: "Pagamento boleto CEEE",
+        valor: 204.3,
+        data: new Date("2025-12-19"),
+        tipo: "DESPESA",
+        origem: "EXTRATO",
+        competencia: "2025-12",
       },
     ],
   });
-
-  console.log("✔ Produtos criados");
-
-  console.log("🌱 Seed finalizado com sucesso!");
 }
 
 main()
-  .catch(e => {
+  .then(() => {
+    console.log("Seed executado com sucesso");
+  })
+  .catch((e) => {
     console.error(e);
     process.exit(1);
   })

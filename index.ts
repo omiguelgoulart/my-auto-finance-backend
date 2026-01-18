@@ -7,6 +7,7 @@ import contaRoutes from './routes/conta';
 import categoriaRoutes from './routes/categoria';
 import movimentacaoRoutes from './routes/movimentacao';
 import regraCategoriaRoutes from './routes/regraCategoria';
+import dashboardRoutes from './routes/dashboard';
 
 
 import cors from 'cors';
@@ -30,6 +31,7 @@ app.use('/conta', contaRoutes);
 app.use('/categoria', categoriaRoutes);
 app.use('/movimentacao', movimentacaoRoutes);
 app.use('/regra-categoria', regraCategoriaRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 
 

@@ -32,7 +32,23 @@ router.post("/", async (req: Request, res: Response) => {
       return res.status(401).json({ erro: mensaPadrao });
     }
 
-    const senhaConfere = await bcrypt.compare(senha, usuario.senha);
+    const senhaBanco = usuario.senha;
+    let senhaConfere = false;
+
+    if (senhaBanco.startsWith("$2")) {
+      senhaConfere = await bcrypt.compare(senha, senhaBanco);
+    } else {
+      senhaConfere = senha === senhaBanco;
+
+      if (senhaConfere) {
+        const senhaHash = await bcrypt.hash(senha, 10);
+        await prisma.usuario.update({
+          where: { id: usuario.id },
+          data: { senha: senhaHash },
+        });
+      }
+    }
+
     if (!senhaConfere) {
       return res.status(401).json({ erro: mensaPadrao });
     }

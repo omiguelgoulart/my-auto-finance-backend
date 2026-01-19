@@ -1,10 +1,10 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 declare global {
   namespace Express {
     interface Request {
-      userLogadoId?: number;
+      userLogadoId?: string;
       userLogadoNome?: string;
       userLogadoEmail?: string;
     }
@@ -12,10 +12,10 @@ declare global {
 }
 
 interface TokenI extends JwtPayload {
-  userLogadoId?: number;
+  userLogadoId?: string;
   userLogadoNome?: string;
   email?: string;
-  id?: number;
+  id?: string;
   nome?: string;
 }
 
@@ -29,9 +29,7 @@ export function verificaToken(req: Request, res: Response, next: NextFunction) {
   const [scheme, token] = authorization.split(" ");
 
   if (scheme !== "Bearer" || !token) {
-    return res
-      .status(401)
-      .json({ error: "Formato do token inválido. Use: Bearer <token>" });
+    return res.status(401).json({ error: "Formato do token inválido. Use: Bearer <token>" });
   }
 
   const jwtKey = process.env.JWT_KEY;
@@ -45,7 +43,7 @@ export function verificaToken(req: Request, res: Response, next: NextFunction) {
     const id = decoded.userLogadoId ?? decoded.id;
     const nome = decoded.userLogadoNome ?? decoded.nome;
 
-    if (typeof id !== "number" || typeof nome !== "string") {
+    if (typeof id !== "string" || typeof nome !== "string") {
       return res.status(401).json({ error: "Token inválido (payload incompleto)" });
     }
 

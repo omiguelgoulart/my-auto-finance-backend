@@ -29,6 +29,7 @@ model Usuario {
   movimentacoes      Movimentacao[]
   regras             RegraCategoria[]
   tokensRecuperacaoSenha TokenRecuperacaoSenha[]
+  preferencia        PreferenciaUsuario?
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -153,4 +154,25 @@ model RegraCategoria {
   usuario     Usuario  @relation(fields: [usuarioId], references: [id])
   categoria   Categoria @relation(fields: [categoriaId], references: [id])
   createdAt   DateTime @default(now())
+}
+
+model PreferenciaUsuario {
+  id            String   @id @default(uuid())
+  usuarioId     String   @unique
+
+  moeda         String   @default("BRL")
+  inicioMes     Int      @default(1)
+  tema          Tema     @default(SYSTEM)
+  idioma        String   @default("pt-BR")
+  fusoHorario   String   @default("America/Sao_Paulo")
+
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Tema {
+  SYSTEM
+  LIGHT
+  DARK
 }

@@ -8,6 +8,8 @@ import categoriaRoutes from './routes/categoria';
 import movimentacaoRoutes from './routes/movimentacao';
 import regraCategoriaRoutes from './routes/regraCategoria';
 import dashboardRoutes from './routes/dashboard';
+import preferenciaRoutes from './routes/preferencia';
+
 
 
 import cors from 'cors';
@@ -32,6 +34,7 @@ app.use('/categoria', categoriaRoutes);
 app.use('/movimentacao', movimentacaoRoutes);
 app.use('/regra-categoria', regraCategoriaRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/preferencia', preferenciaRoutes);
 
 
 
